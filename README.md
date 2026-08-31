@@ -398,19 +398,19 @@ The application processes each record and displays a summary containing the tota
 
 ### Application Interface
 
-![CreditIQ Single Prediction](images/single-prediction.png)
+![CreditIQ Single Prediction](images/single-prediction.png.png)
 
 ### Good Risk Prediction
 
-![Good Risk Result](images/good-risk-result.png)
+![Good Risk Result](images/good-risk-result.png.png)
 
 ### Bad Risk Prediction
 
-![Bad Risk Result](images/bad-risk-result.png)
+![Bad Risk Result](images/bad-risk-result.png.png)
 
 ### Batch Prediction
 
-![Batch Prediction](images/batch-prediction.png)
+![Batch Prediction](images/batch-prediction.png.png)
 ```
 
 
