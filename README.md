@@ -251,8 +251,8 @@ Make sure the following are installed:
 ### 1. Clone the repository
 
 ```bash
-git clone <YOUR_GITHUB_REPOSITORY_URL>
-cd CapstoneProject_3
+git clone https://github.com/asiyasajeed30-glitch/CreditIQ-Credit-Risk-Predictor.git
+cd CreditIQ-Credit-Risk-Predictor
 ```
 
 ### 2. Create a virtual environment
