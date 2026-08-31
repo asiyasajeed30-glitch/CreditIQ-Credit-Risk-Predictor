@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CreditIQ — Risk Predictor</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161d;
+      --card: #1a1e28;
+      --border: #252a38;
+      --accent: #5fffb0;
+      --accent2: #ff6b6b;
+      --accent3: #7eb6ff;
+      --text: #e8eaf0;
+      --muted: #6b7280;
+      --good: #5fffb0;
+      --bad: #ff6b6b;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(95,255,176,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(95,255,176,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    /* Header */
+    header { text-align: center; margin-bottom: 48px; }
+    .logo-pill {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(95,255,176,0.08); border: 1px solid rgba(95,255,176,0.2);
+      border-radius: 100px; padding: 6px 16px; margin-bottom: 20px;
+      font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent);
+      letter-spacing: 2px; text-transform: uppercase;
+    }
+    .logo-dot { width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.8)} }
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(36px, 6vw, 56px);
+      line-height: 1.1;
+      background: linear-gradient(135deg, #e8eaf0 30%, #5fffb0);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 12px;
+    }
+    .subtitle { color: var(--muted); font-size: 15px; font-weight: 300; }
+
+    /* Tabs */
+    .tabs { display: flex; gap: 0; margin-bottom: 32px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+    .tab {
+      flex: 1; padding: 12px 20px; background: var(--surface); border: none;
+      color: var(--muted); font-family: 'DM Sans', sans-serif; font-size: 14px;
+      font-weight: 500; cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
+    }
+    .tab.active { background: var(--card); color: var(--accent); border-bottom: 2px solid var(--accent); }
+    .tab:hover:not(.active) { color: var(--text); background: var(--card); }
+
+    /* Panel */
+    .panel { display: none; }
+    .panel.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Form card */
+    .card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; padding: 32px; margin-bottom: 24px;
+    }
+    .card-title {
+      font-family: 'DM Mono', monospace; font-size: 11px;
+      color: var(--accent); letter-spacing: 2px; text-transform: uppercase;
+      margin-bottom: 20px; padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+    @media(max-width:600px) { .grid-2,.grid-3 { grid-template-columns: 1fr; } }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 12px; color: var(--muted); font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; }
+    input, select {
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 11px 14px;
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    input:focus, select:focus {
+      outline: none; border-color: rgba(95,255,176,0.5);
+      box-shadow: 0 0 0 3px rgba(95,255,176,0.07);
+    }
+    select { cursor: pointer; }
+
+    /* Batch textarea */
+    textarea {
+      width: 100%; background: var(--surface); border: 1px solid var(--border);
+      color: var(--text); border-radius: 8px; padding: 14px;
+      font-family: 'DM Mono', monospace; font-size: 12px;
+      line-height: 1.6; resize: vertical; min-height: 280px;
+      transition: border-color 0.2s;
+    }
+    textarea:focus { outline: none; border-color: rgba(95,255,176,0.5); box-shadow: 0 0 0 3px rgba(95,255,176,0.07); }
+
+    /* Submit button */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+      background: var(--accent); color: #0d0f14; border: none;
+      padding: 13px 28px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+      transition: all 0.2s; width: 100%; letter-spacing: 0.3px;
+    }
+    .btn:hover { background: #7fffc0; transform: translateY(-1px); box-shadow: 0 8px 24px rgba(95,255,176,0.2); }
+    .btn:active { transform: translateY(0); }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    .spinner {
+      width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.3);
+      border-top-color: #0d0f14; border-radius: 50%; animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Result card */
+    .result-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 16px; overflow: hidden; margin-top: 24px;
+      animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUp { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+
+    .result-header {
+      padding: 24px 32px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .result-header.good { background: rgba(95,255,176,0.08); border-bottom: 1px solid rgba(95,255,176,0.15); }
+    .result-header.bad  { background: rgba(255,107,107,0.08); border-bottom: 1px solid rgba(255,107,107,0.15); }
+
+    .verdict { display: flex; align-items: center; gap: 14px; }
+    .verdict-icon {
+      width: 48px; height: 48px; border-radius: 12px;
+      display: flex; align-items: center; justify-content: center; font-size: 22px;
+    }
+    .good .verdict-icon { background: rgba(95,255,176,0.15); }
+    .bad  .verdict-icon { background: rgba(255,107,107,0.15); }
+    .verdict-label { font-family: 'DM Serif Display', serif; font-size: 28px; }
+    .good .verdict-label { color: var(--good); }
+    .bad  .verdict-label { color: var(--bad); }
+    .verdict-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+    .confidence-badge {
+      text-align: right;
+      font-family: 'DM Mono', monospace;
+    }
+    .conf-pct { font-size: 32px; font-weight: 500; }
+    .good .conf-pct { color: var(--good); }
+    .bad  .conf-pct { color: var(--bad); }
+    .conf-label { font-size: 11px; color: var(--muted); letter-spacing: 1px; text-transform: uppercase; }
+
+    .result-body { padding: 24px 32px; }
+    .meta-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 16px; }
+    .meta-item { }
+    .meta-key { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+    .meta-val { font-family: 'DM Mono', monospace; font-size: 14px; color: var(--text); }
+
+    /* Batch results */
+    .batch-results { margin-top: 24px; display: flex; flex-direction: column; gap: 12px; }
+    .batch-row {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px;
+      display: flex; align-items: center; justify-content: space-between;
+      animation: slideUp 0.3s ease both;
+    }
+    .batch-row:nth-child(n) { animation-delay: calc(var(--i,0)*0.06s); }
+    .batch-row-left { display: flex; align-items: center; gap: 14px; }
+    .idx { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--muted); min-width: 28px; }
+    .batch-info { font-size: 13px; color: var(--text); }
+    .batch-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .badge {
+      padding: 4px 12px; border-radius: 100px;
+      font-size: 12px; font-weight: 600; font-family: 'DM Mono', monospace;
+    }
+    .badge-good { background: rgba(95,255,176,0.12); color: var(--good); border: 1px solid rgba(95,255,176,0.2); }
+    .badge-bad  { background: rgba(255,107,107,0.12); color: var(--bad);  border: 1px solid rgba(255,107,107,0.2); }
+
+    .summary-bar {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 20px; margin-bottom: 16px;
+      display: flex; gap: 32px; align-items: center;
+    }
+    .sum-item { text-align: center; }
+    .sum-num { font-family: 'DM Serif Display', serif; font-size: 26px; }
+    .sum-lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+
+    .error-msg {
+      background: rgba(255,107,107,0.08); border: 1px solid rgba(255,107,107,0.2);
+      color: #ff9090; border-radius: 10px; padding: 14px 18px;
+      font-size: 13px; font-family: 'DM Mono', monospace; margin-top: 16px;
+    }
+
+    .hint { font-size: 12px; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <header>
+    <div class="logo-pill"><span class="logo-dot"></span>ML Powered</div>
+    <h1>CreditIQ</h1>
+    <p class="subtitle">German Credit Risk Predictor · Logistic Regression + PCA</p>
+  </header>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('single',this)">Single Prediction</button>
+    <button class="tab" onclick="switchTab('batch',this)">Batch Prediction</button>
+  </div>
+
+  <!-- SINGLE -->
+  <div class="panel active" id="panel-single">
+    <div class="card">
+      <div class="card-title">Personal Information</div>
+      <div class="grid-3">
+        <div class="field">
+          <label>Age</label>
+          <input type="number" id="age" min="18" max="100" placeholder="35" value="35"/>
+        </div>
+        <div class="field">
+          <label>Sex</label>
+          <select id="sex">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Job Level (0–3)</label>
+          <select id="job">
+            <option value="0">0 – Unskilled (non-resident)</option>
+            <option value="1">1 – Unskilled (resident)</option>
+            <option value="2" selected>2 – Skilled</option>
+            <option value="3">3 – Highly Skilled</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Financial Details</div>
+      <div class="grid-2">
+        <div class="field">
+          <label>Housing</label>
+          <select id="housing">
+            <option value="own">Own</option>
+            <option value="free">Free</option>
+            <option value="rent">Rent</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Saving Accounts</label>
+          <select id="saving">
+            <option value="little">Little</option>
+            <option value="moderate">Moderate</option>
+            <option value="quite rich">Quite Rich</option>
+            <option value="rich">Rich</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Checking Account</label>
+          <select id="checking">
+            <option value="little">Little</option>
+            <option value="moderate">Moderate</option>
+            <option value="rich">Rich</option>
+            <option value="unknown">Unknown</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Purpose</label>
+          <select id="purpose">
+            <option value="car">Car</option>
+            <option value="radio/TV">Radio / TV</option>
+            <option value="furniture/equipment">Furniture / Equipment</option>
+            <option value="business">Business</option>
+            <option value="education">Education</option>
+            <option value="repairs">Repairs</option>
+            <option value="domestic appliances">Domestic Appliances</option>
+            <option value="vacation/others">Vacation / Others</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Credit Amount (€)</label>
+          <input type="number" id="credit" min="1" placeholder="5000" value="5000"/>
+        </div>
+        <div class="field">
+          <label>Duration (months)</label>
+          <input type="number" id="duration" min="1" placeholder="24" value="24"/>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn" id="btn-single" onclick="predictSingle()">
+      <span>Analyse Credit Risk</span>
+    </button>
+
+    <div id="single-result"></div>
+  </div>
+
+  <!-- BATCH -->
+  <div class="panel" id="panel-batch">
+    <div class="card">
+      <div class="card-title">Batch JSON Input</div>
+      <textarea id="batch-input">[
+  {
+    "age": 50,
+    "sex": "male",
+    "job": 3,
+    "housing": "own",
+    "saving_accounts": "rich",
+    "checking_account": "rich",
+    "credit_amount": 1500,
+    "duration": 6,
+    "purpose": "radio/TV"
+  },
+  {
+    "age": 22,
+    "sex": "female",
+    "job": 1,
+    "housing": "rent",
+    "saving_accounts": "unknown",
+    "checking_account": "unknown",
+    "credit_amount": 12000,
+    "duration": 48,
+    "purpose": "education"
+  },
+  {
+    "age": 35,
+    "sex": "male",
+    "job": 2,
+    "housing": "own",
+    "saving_accounts": "little",
+    "checking_account": "moderate",
+    "credit_amount": 5000,
+    "duration": 24,
+    "purpose": "car"
+  },
+  {
+    "age": 25,
+    "sex": "male",
+    "job": 1,
+    "housing": "rent",
+    "saving_accounts": "little",
+    "checking_account": "little",
+    "credit_amount": 8000,
+    "duration": 36,
+    "purpose": "car"
+  }
+]</textarea>
+      <p class="hint">Paste a JSON array of records. Each record must include all fields shown above.</p>
+    </div>
+    <button class="btn" id="btn-batch" onclick="predictBatch()">
+      <span>Run Batch Prediction</span>
+    </button>
+    <div id="batch-result"></div>
+  </div>
+
+</div>
+
+<script>
+  function switchTab(name, el) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('panel-' + name).classList.add('active');
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    if (loading) {
+      btn.disabled = true;
+      btn.innerHTML = '<div class="spinner"></div><span>Analysing...</span>';
+    } else {
+      btn.disabled = false;
+      btn.innerHTML = btnId === 'btn-single'
+        ? '<span>Analyse Credit Risk</span>'
+        : '<span>Run Batch Prediction</span>';
+    }
+  }
+
+  function renderSingleResult(data) {
+    const isGood = data.risk === 'good';
+    const cls = isGood ? 'good' : 'bad';
+    const icon = isGood ? '✓' : '✗';
+    const label = isGood ? 'Good Risk' : 'Bad Risk';
+    const s = data.input_summary;
+    document.getElementById('single-result').innerHTML = `
+      <div class="result-card">
+        <div class="result-header ${cls}">
+          <div class="verdict">
+            <div class="verdict-icon">${icon}</div>
+            <div>
+              <div class="verdict-label">${label}</div>
+              <div class="verdict-sub">Model: Logistic Regression + PCA (n=5)</div>
+            </div>
+          </div>
+          <div class="confidence-badge">
+            <div class="conf-pct">${data.confidence}%</div>
+            <div class="conf-label">Confidence</div>
+          </div>
+        </div>
+        <div class="result-body">
+          <div class="meta-grid">
+            <div class="meta-item"><div class="meta-key">Age</div><div class="meta-val">${s.age}</div></div>
+            <div class="meta-item"><div class="meta-key">Sex</div><div class="meta-val">${s.sex}</div></div>
+            <div class="meta-item"><div class="meta-key">Credit</div><div class="meta-val">€${s.credit_amount.toLocaleString()}</div></div>
+            <div class="meta-item"><div class="meta-key">Duration</div><div class="meta-val">${s.duration} mo</div></div>
+            <div class="meta-item"><div class="meta-key">Purpose</div><div class="meta-val">${s.purpose}</div></div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  async function predictSingle() {
+    setLoading('btn-single', true);
+    document.getElementById('single-result').innerHTML = '';
+    const payload = {
+      age: parseInt(document.getElementById('age').value),
+      sex: document.getElementById('sex').value,
+      job: parseInt(document.getElementById('job').value),
+      housing: document.getElementById('housing').value,
+      saving_accounts: document.getElementById('saving').value,
+      checking_account: document.getElementById('checking').value,
+      credit_amount: parseFloat(document.getElementById('credit').value),
+      duration: parseInt(document.getElementById('duration').value),
+      purpose: document.getElementById('purpose').value
+    };
+    try {
+      const res = await fetch('/predict', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      renderSingleResult(data);
+    } catch(e) {
+      document.getElementById('single-result').innerHTML =
+        `<div class="error-msg">⚠ ${e.message}</div>`;
+    }
+    setLoading('btn-single', false);
+  }
+
+  async function predictBatch() {
+    setLoading('btn-batch', true);
+    document.getElementById('batch-result').innerHTML = '';
+    let records;
+    try {
+      records = JSON.parse(document.getElementById('batch-input').value);
+      if (!Array.isArray(records)) throw new Error('Input must be a JSON array');
+    } catch(e) {
+      document.getElementById('batch-result').innerHTML =
+        `<div class="error-msg">⚠ Invalid JSON: ${e.message}</div>`;
+      setLoading('btn-batch', false);
+      return;
+    }
+    try {
+      const res = await fetch('/predict/batch', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({ records })
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      const data = await res.json();
+      const good = data.predictions.filter(p => p.risk === 'good').length;
+      const bad = data.total - good;
+      let rows = data.predictions.map((p, i) => {
+        const s = p.input_summary;
+        const cls = p.risk === 'good' ? 'badge-good' : 'badge-bad';
+        return `<div class="batch-row" style="--i:${i}">
+          <div class="batch-row-left">
+            <span class="idx">#${p.record_index}</span>
+            <div>
+              <div class="batch-info">Age ${s.age} · ${s.sex} · €${s.credit_amount.toLocaleString()} · ${s.duration}mo</div>
+              <div class="batch-sub">${s.purpose} · ${p.confidence}% confidence</div>
+            </div>
+          </div>
+          <span class="badge ${cls}">${p.risk.toUpperCase()}</span>
+        </div>`;
+      }).join('');
+      document.getElementById('batch-result').innerHTML = `
+        <div class="batch-results">
+          <div class="summary-bar">
+            <div class="sum-item"><div class="sum-num" style="color:var(--text)">${data.total}</div><div class="sum-lbl">Total</div></div>
+            <div class="sum-item"><div class="sum-num" style="color:var(--good)">${good}</div><div class="sum-lbl">Good Risk</div></div>
+            <div class="sum-item"><div class="sum-num" style="color:var(--bad)">${bad}</div><div class="sum-lbl">Bad Risk</div></div>
+          </div>
+          ${rows}
+        </div>`;
+    } catch(e) {
+      document.getElementById('batch-result').innerHTML =
+        `<div class="error-msg">⚠ ${e.message}</div>`;
+    }
+    setLoading('btn-batch', false);
+  }
+</script>
+</body>
+</html>
